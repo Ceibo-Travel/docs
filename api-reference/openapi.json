@@ -236,6 +236,383 @@
           "401": { "$ref": "#/components/responses/Unauthorized" }
         }
       }
+    },
+    "/entry-requirements": {
+      "get": {
+        "summary": "List entry requirements",
+        "description": "Paginated list of entry requirements. Filterable by destination country, origin country, country group, and staleness.",
+        "parameters": [
+          {
+            "name": "toCountryId",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer" }
+          },
+          {
+            "name": "fromCountryId",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer" }
+          },
+          {
+            "name": "toCountryGroupId",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer" }
+          },
+          {
+            "name": "fromCountryGroupId",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer" }
+          },
+          {
+            "name": "stale",
+            "in": "query",
+            "description": "Restrict to records whose `lastVerifiedAt` is older than 6 months.",
+            "required": false,
+            "schema": { "type": "boolean" }
+          },
+          {
+            "name": "languageId",
+            "in": "query",
+            "description": "Translate textual fields to this language id (falls back to default).",
+            "required": false,
+            "schema": { "type": "integer" }
+          },
+          {
+            "name": "locale",
+            "in": "query",
+            "description": "Alternative to `languageId`; e.g. `es`, `en`.",
+            "required": false,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer", "minimum": 1, "default": 1 }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated list of entry requirements.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedEntryRequirements"
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "429": { "$ref": "#/components/responses/RateLimited" }
+        }
+      }
+    },
+    "/entry-requirements/personalized": {
+      "get": {
+        "summary": "Get personalized entry requirements",
+        "description": "Returns the most specific entry requirement applicable to a traveler with `fromCountryId` passport visiting `toCountryId`. Falls back from country-specific to general rules. The response wraps the requirement with an `applicabilityContext` describing why it matched.",
+        "parameters": [
+          {
+            "name": "fromCountryId",
+            "in": "query",
+            "required": true,
+            "description": "Traveler's passport country.",
+            "schema": { "type": "integer" }
+          },
+          {
+            "name": "toCountryId",
+            "in": "query",
+            "required": true,
+            "description": "Destination country.",
+            "schema": { "type": "integer" }
+          },
+          {
+            "name": "cityId",
+            "in": "query",
+            "required": false,
+            "description": "Destination city — narrows to city-specific requirements when present.",
+            "schema": { "type": "integer" }
+          },
+          {
+            "name": "languageId",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer" }
+          },
+          {
+            "name": "locale",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Applicable requirement plus context.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PersonalizedEntryRequirements"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/entry-requirements/by-destination/{id}": {
+      "get": {
+        "summary": "List entry requirements for a destination",
+        "description": "Returns every entry requirement (general + per-origin) that targets this destination country.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" }
+          },
+          {
+            "name": "languageId",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer" }
+          },
+          {
+            "name": "locale",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "All requirements targeting this destination.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/EntryRequirement" }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/entry-requirements/{id}": {
+      "get": {
+        "summary": "Get an entry requirement by id",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The entry requirement.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EntryRequirement"
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/health-requirements": {
+      "get": {
+        "summary": "List health requirements",
+        "description": "Vaccine requirements for entry. Filter by `countryId` (and optionally `cityId`) for destination-scoped results, or omit both for the paginated catalogue.",
+        "parameters": [
+          {
+            "name": "countryId",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer" }
+          },
+          {
+            "name": "cityId",
+            "in": "query",
+            "description": "Requires `countryId`. Returns city-specific or non-region-specific requirements.",
+            "required": false,
+            "schema": { "type": "integer" }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer", "minimum": 1, "default": 1 }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Health requirements. Returns a paginated envelope without `countryId`, an unwrapped array with it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/PaginatedHealthRequirements"
+                    },
+                    {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/HealthRequirement"
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/health-requirements/{id}": {
+      "get": {
+        "summary": "Get a health requirement by id",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The health requirement.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthRequirement"
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/vaccines": {
+      "get": {
+        "summary": "List or search vaccines",
+        "description": "Paginated catalogue of vaccines. Pass `q` to perform free-text search across name and disease.",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "description": "Free-text search across vaccine name and disease.",
+            "required": false,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer", "minimum": 1, "default": 1 }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          },
+          {
+            "name": "sortBy",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "sortOrder",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string", "enum": ["asc", "desc"] }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated list of vaccines.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedVaccines"
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/vaccines/{id}": {
+      "get": {
+        "summary": "Get a vaccine by id",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The vaccine.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Vaccine" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
     }
   },
   "components": {
@@ -344,6 +721,250 @@
           }
         }
       },
+      "EnforcementLevel": {
+        "type": "string",
+        "enum": ["required", "recommended", "may_be_asked", "not_required"],
+        "description": "Captures both whether a requirement exists and how strictly it is enforced at the border."
+      },
+      "VisaRequirementType": {
+        "type": "string",
+        "enum": [
+          "visa_free",
+          "visa_on_arrival",
+          "e_visa",
+          "visa_required",
+          "eta",
+          "not_allowed"
+        ]
+      },
+      "DocumentValidity": {
+        "type": "object",
+        "properties": {
+          "minimumDays": { "type": "integer", "example": 180 }
+        }
+      },
+      "EntryRequirement": {
+        "type": "object",
+        "required": [
+          "id",
+          "priority",
+          "customsDeclarationRequired",
+          "createdAt",
+          "updatedAt"
+        ],
+        "properties": {
+          "id": { "type": "integer", "example": 1 },
+          "fromCountryId": {
+            "type": ["integer", "null"],
+            "description": "Origin country. `null` means the rule applies to all travelers (general)."
+          },
+          "fromCountryGroupId": { "type": ["integer", "null"] },
+          "toCountryId": { "type": ["integer", "null"] },
+          "toCountryGroupId": { "type": ["integer", "null"] },
+          "priority": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Higher = more specific. Used to resolve overlapping rules."
+          },
+          "documentValidity": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/DocumentValidity" },
+              { "type": "null" }
+            ]
+          },
+          "proofOfFunds": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/EnforcementLevel" },
+              { "type": "null" }
+            ]
+          },
+          "proofOfFundsDetails": { "type": ["string", "null"] },
+          "proofOfFundsAmountUsd": { "type": ["number", "null"] },
+          "proofOfFundsSourceUrl": { "type": ["string", "null"] },
+          "proofOfFundsAmountLocal": { "type": ["number", "null"] },
+          "proofOfFundsCurrencyId": { "type": ["integer", "null"] },
+          "returnTicket": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/EnforcementLevel" },
+              { "type": "null" }
+            ]
+          },
+          "returnTicketDetails": { "type": ["string", "null"] },
+          "returnTicketSourceUrl": { "type": ["string", "null"] },
+          "healthInsurance": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/EnforcementLevel" },
+              { "type": "null" }
+            ]
+          },
+          "healthInsuranceDetails": { "type": ["string", "null"] },
+          "healthInsuranceCoverageUsd": { "type": ["number", "null"] },
+          "healthInsuranceSourceUrl": { "type": ["string", "null"] },
+          "customsDeclarationRequired": { "type": "boolean" },
+          "customsDeclarationDetails": { "type": ["string", "null"] },
+          "customsDeclarationUrl": { "type": ["string", "null"] },
+          "proofOfAccommodation": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/EnforcementLevel" },
+              { "type": "null" }
+            ]
+          },
+          "proofOfAccommodationDetails": { "type": ["string", "null"] },
+          "proofOfAccommodationSourceUrl": { "type": ["string", "null"] },
+          "visaRequirementType": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/VisaRequirementType" },
+              { "type": "null" }
+            ]
+          },
+          "maxStayDays": { "type": ["integer", "null"], "example": 90 },
+          "generalNotes": { "type": ["string", "null"] },
+          "sourceUrl": { "type": ["string", "null"] },
+          "officialWebsiteUrl": { "type": ["string", "null"] },
+          "visaApplicationUrl": { "type": ["string", "null"] },
+          "visaProcessingDays": {
+            "type": ["integer", "null"],
+            "minimum": 1,
+            "maximum": 365
+          },
+          "lastVerifiedAt": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "PersonalizedEntryRequirements": {
+        "type": "object",
+        "required": ["applicabilityContext"],
+        "properties": {
+          "requirement": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/EntryRequirement" },
+              { "type": "null" }
+            ]
+          },
+          "applicabilityContext": {
+            "type": "object",
+            "required": ["isFromMercosur", "countryGroups"],
+            "properties": {
+              "isFromMercosur": { "type": "boolean" },
+              "countryGroups": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["code", "name"],
+                  "properties": {
+                    "code": { "type": "string", "example": "mercosur" },
+                    "name": { "type": "string", "example": "MERCOSUR" }
+                  }
+                }
+              }
+            }
+          },
+          "translationMeta": {
+            "anyOf": [
+              {
+                "type": "object",
+                "required": ["languageId", "isFallback"],
+                "properties": {
+                  "languageId": { "type": "integer" },
+                  "isFallback": { "type": "boolean" }
+                }
+              },
+              { "type": "null" }
+            ]
+          }
+        }
+      },
+      "Vaccine": {
+        "type": "object",
+        "required": [
+          "id",
+          "code",
+          "name",
+          "diseaseName",
+          "dosesRequired",
+          "boosterRequired",
+          "createdAt",
+          "updatedAt"
+        ],
+        "properties": {
+          "id": { "type": "integer", "example": 1 },
+          "code": { "type": "string", "example": "yellow_fever" },
+          "name": { "type": "string", "example": "Yellow Fever Vaccine" },
+          "diseaseName": { "type": "string", "example": "Yellow Fever" },
+          "whoName": {
+            "type": ["string", "null"],
+            "example": "Yellow fever vaccine (live, attenuated)"
+          },
+          "alternativeNames": {
+            "type": ["array", "null"],
+            "items": { "type": "string" },
+            "example": ["YF-VAX", "Stamaril"]
+          },
+          "description": { "type": ["string", "null"] },
+          "dosesRequired": { "type": "integer", "minimum": 1, "example": 1 },
+          "boosterRequired": { "type": "boolean", "example": false },
+          "immunityDurationDays": {
+            "type": ["integer", "null"],
+            "example": 3650
+          },
+          "minimumDaysBeforeTravel": {
+            "type": ["integer", "null"],
+            "example": 10
+          },
+          "officialInfoUrl": {
+            "type": ["string", "null"],
+            "example": "https://www.who.int/news-room/fact-sheets/detail/yellow-fever"
+          },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "HealthRequirement": {
+        "type": "object",
+        "required": [
+          "id",
+          "countryId",
+          "regionSpecific",
+          "vaccineId",
+          "vaccine",
+          "requirement",
+          "createdAt",
+          "updatedAt"
+        ],
+        "properties": {
+          "id": { "type": "integer", "example": 1 },
+          "countryId": { "type": "integer", "example": 76 },
+          "cityId": { "type": ["integer", "null"], "example": 5 },
+          "regionSpecific": { "type": "boolean" },
+          "vaccineId": { "type": "integer", "example": 1 },
+          "vaccine": {
+            "type": "object",
+            "required": ["id", "code", "name", "diseaseName", "dosesRequired"],
+            "properties": {
+              "id": { "type": "integer" },
+              "code": { "type": "string" },
+              "name": { "type": "string" },
+              "diseaseName": { "type": "string" },
+              "dosesRequired": { "type": "integer" },
+              "minimumDaysBeforeTravel": { "type": ["integer", "null"] }
+            }
+          },
+          "requirement": { "$ref": "#/components/schemas/EnforcementLevel" },
+          "circumstances": { "type": ["string", "null"] },
+          "notes": { "type": ["string", "null"] },
+          "sourceUrl": { "type": ["string", "null"] },
+          "lastVerifiedAt": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
       "PaginationMeta": {
         "type": "object",
         "required": ["page", "limit", "total", "totalPages"],
@@ -372,6 +993,39 @@
           "data": {
             "type": "array",
             "items": { "$ref": "#/components/schemas/City" }
+          },
+          "meta": { "$ref": "#/components/schemas/PaginationMeta" }
+        }
+      },
+      "PaginatedEntryRequirements": {
+        "type": "object",
+        "required": ["data", "meta"],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/EntryRequirement" }
+          },
+          "meta": { "$ref": "#/components/schemas/PaginationMeta" }
+        }
+      },
+      "PaginatedHealthRequirements": {
+        "type": "object",
+        "required": ["data", "meta"],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/HealthRequirement" }
+          },
+          "meta": { "$ref": "#/components/schemas/PaginationMeta" }
+        }
+      },
+      "PaginatedVaccines": {
+        "type": "object",
+        "required": ["data", "meta"],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/Vaccine" }
           },
           "meta": { "$ref": "#/components/schemas/PaginationMeta" }
         }

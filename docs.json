@@ -20,6 +20,12 @@
               "quickstart",
               "authentication"
             ]
+          },
+          {
+            "group": "Concepts",
+            "pages": [
+              "travel-requirements"
+            ]
           }
         ]
       },
@@ -44,6 +50,29 @@
             "pages": [
               "api-reference/endpoint/list-cities",
               "api-reference/endpoint/search-cities"
+            ]
+          },
+          {
+            "group": "Entry requirements",
+            "pages": [
+              "api-reference/endpoint/list-entry-requirements",
+              "api-reference/endpoint/personalized-entry-requirements",
+              "api-reference/endpoint/entry-requirements-by-destination",
+              "api-reference/endpoint/get-entry-requirement"
+            ]
+          },
+          {
+            "group": "Health requirements",
+            "pages": [
+              "api-reference/endpoint/list-health-requirements",
+              "api-reference/endpoint/get-health-requirement"
+            ]
+          },
+          {
+            "group": "Vaccines",
+            "pages": [
+              "api-reference/endpoint/list-vaccines",
+              "api-reference/endpoint/get-vaccine"
             ]
           }
         ]

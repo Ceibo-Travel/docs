@@ -1,0 +1,145 @@
+---
+title: "Travel requirements"
+description: "Visa, health, and document requirements for any origin/destination pair."
+icon: "passport"
+---
+
+The Ceibo travel-requirements API answers the central question travelers
+ask before a trip: **"can I go, and what do I need to bring?"**
+
+It covers four overlapping concerns, exposed as three endpoint families:
+
+| Concern | Endpoint family |
+| --- | --- |
+| Visa, document validity, proof of funds, return ticket, accommodation, customs, insurance | [`/entry-requirements`](/api-reference/endpoint/list-entry-requirements) |
+| Vaccines required or recommended for a destination | [`/health-requirements`](/api-reference/endpoint/list-health-requirements) |
+| Vaccine catalogue and metadata (doses, lead time, immunity duration) | [`/vaccines`](/api-reference/endpoint/list-vaccines) |
+
+## Personalized vs general
+
+Entry requirements come in two flavours:
+
+- **General** — `fromCountryId` is `null`. Apply to every traveler
+  regardless of nationality.
+- **Country-specific** — `fromCountryId` is set. Override the general
+  rule for travelers carrying that passport.
+
+The API resolves the precedence for you. Call
+[`/entry-requirements/personalized`](/api-reference/endpoint/personalized-entry-requirements)
+with the traveler's passport country and destination, and it returns
+the most specific applicable rule plus context about why.
+
+```bash
+curl "https://api.ceibo.me/v1/entry-requirements/personalized?fromCountryId=10&toCountryId=2" \
+  -H "x-api-key: $CEIBO_API_KEY"
+```
+
+The response wraps the requirement with an `applicabilityContext`
+explaining the matching logic:
+
+```json
+{
+  "requirement": {
+    "id": 1,
+    "fromCountryId": 10,
+    "toCountryId": 2,
+    "visaRequirementType": "visa_free",
+    "maxStayDays": 90,
+    "documentValidity": { "minimumDays": 180 },
+    "proofOfFunds": "may_be_asked",
+    "returnTicket": "may_be_asked",
+    "lastVerifiedAt": "2026-04-01T00:00:00.000Z"
+  },
+  "applicabilityContext": {
+    "isFromMercosur": true,
+    "countryGroups": [
+      { "code": "mercosur", "name": "MERCOSUR" }
+    ]
+  }
+}
+```
+
+## Enforcement levels
+
+Each requirement field uses an enforcement vocabulary that captures
+how the rule plays out at the border, not just whether it exists on
+paper:
+
+| Value | Meaning |
+| --- | --- |
+| `required` | Mandatory. Always checked at entry. |
+| `may_be_asked` | Legally required but enforcement is discretionary — the officer decides. |
+| `recommended` | Strongly suggested but not enforced. |
+| `not_required` | Not required for this traveler/destination. |
+
+The split between `required` and `may_be_asked` matters in practice:
+proof of funds, return ticket, and accommodation are commonly
+`may_be_asked` rather than universal blockers. Surfacing the
+distinction lets your UI tell travelers what to prepare for, not just
+what is mandatory.
+
+## Visa requirement types
+
+The `visaRequirementType` field on an entry requirement uses one of:
+
+| Value | Meaning |
+| --- | --- |
+| `visa_free` | No visa needed for the duration in `maxStayDays` |
+| `visa_on_arrival` | Visa is issued at the border |
+| `e_visa` | Online application; see `visaApplicationUrl` |
+| `eta` | Electronic travel authorization required |
+| `visa_required` | Embassy / consulate visa required in advance |
+| `not_allowed` | Entry not permitted for this passport |
+
+## Health requirements
+
+`/health-requirements?countryId={id}` returns vaccines required or
+recommended for a destination. Pass `cityId` as well to filter to
+city-specific or general (non-region-specific) requirements only —
+useful for destinations like Iguazu Falls where yellow fever applies
+to the northern jungle but not Buenos Aires.
+
+Each row references a vaccine by id and includes the enforcement
+level, region scope, and notes. The full vaccine catalogue (doses,
+lead time before travel, booster info) lives at `/vaccines`.
+
+## Data freshness
+
+Every requirement has a `lastVerifiedAt` timestamp. Records older than
+six months are flagged stale and re-verified by the editorial team.
+Build your UX with `lastVerifiedAt` visible — travelers should be told
+when the source is recent, and when to double-check with an official
+government link before booking.
+
+## Useful sequences
+
+### "Can I go?" check
+
+```bash
+GET /v1/entry-requirements/personalized?fromCountryId=10&toCountryId=76
+GET /v1/health-requirements?countryId=76
+```
+
+One call answers visa/funds/document needs; the second fills in
+vaccines.
+
+### Destination overview
+
+```bash
+GET /v1/entry-requirements/by-destination/76
+GET /v1/health-requirements?countryId=76
+```
+
+For destination pages where you don't yet know the visitor's passport,
+return everything available and let the user pick.
+
+### Vaccine deep-dive
+
+```bash
+GET /v1/vaccines?q=hepatitis
+GET /v1/vaccines/{id}
+```
+
+Search the catalogue, then fetch full metadata — doses, immunity
+duration, minimum days before travel, and the official information
+URL.
