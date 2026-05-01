@@ -1,133 +1,92 @@
 ---
-title: "Introduction"
-description: "Welcome to the new home for your documentation"
-icon: 'star'
+title: "Welcome to Ceibo"
+description: "The travel platform API — walking tours, entry requirements, and place data for builders."
+icon: "compass"
 ---
 
-## Setting up
+Ceibo is a travel platform with an API for the data and experiences that
+power modern travel apps: self-guided **walking tours**, **entry
+requirements** between any two countries, and a curated catalogue of
+**cities and points of interest**.
 
-Get your documentation site up and running in minutes.
+This is the developer documentation for `api.ceibo.me`. If you're
+looking for the consumer apps, see [ceibo.me](https://ceibo.me).
 
-<Card
-  title="Start here"
-  icon="rocket"
-  href="/quickstart"
-  horizontal
->
-  Follow our three step quickstart guide.
-</Card>
-
-## Make it yours
-
-Design a docs site that looks great and empowers your users.
+## Get started
 
 <Columns cols={2}>
   <Card
-    title="Edit locally"
-    icon="pen-to-square"
-    href="/development"
+    title="Quickstart"
+    icon="rocket"
+    href="/quickstart"
   >
-    Edit your docs locally and preview them in real time.
+    Mint an API key and make your first request in under five minutes.
   </Card>
   <Card
-    title="Customize your site"
-    icon="palette"
-    href="/essentials/settings"
+    title="Authentication"
+    icon="key"
+    href="/authentication"
   >
-    Customize the design and colors of your site to match your brand.
-  </Card>
-    <Card
-    title="Set up navigation"
-    icon="map"
-    href="/essentials/navigation"
-  >
-    Organize your docs to help users find what they need and succeed with your product.
+    API keys for public endpoints, JWT for the developer dashboard.
   </Card>
   <Card
-    title="API documentation"
+    title="API reference"
     icon="terminal"
     href="/api-reference/introduction"
   >
-    Auto-generate API documentation from OpenAPI specifications.
+    Full endpoint reference, pagination, and error contracts.
+  </Card>
+  <Card
+    title="Developer dashboard"
+    icon="gauge"
+    href="https://developer.ceibo.me"
+  >
+    Manage keys, view usage, and pick a subscription tier.
   </Card>
 </Columns>
 
-## Create beautiful pages
-
-Everything you need to create world-class documentation.
+## What you can build
 
 <Columns cols={2}>
   <Card
-    title="Write with MDX"
-    icon="pen-fancy"
-    href="/essentials/markdown"
+    title="Walking tours"
+    icon="map-location-dot"
   >
-    Use MDX to style your docs pages.
+    Audio-guided self-tour content with steps, geometry, and
+    multilingual narration.
   </Card>
   <Card
-    title="Code samples"
-    icon="code"
-    href="/essentials/code"
+    title="Entry requirements"
+    icon="passport"
   >
-    Add sample code to demonstrate how to use your product.
+    Visa, document, health, and customs requirements for any
+    origin/destination pair.
   </Card>
   <Card
-    title="Images"
-    icon="image"
-    href="/essentials/images"
+    title="Cities & POIs"
+    icon="location-dot"
   >
-    Display images and other media.
+    A geocoded catalogue with PostGIS-backed proximity queries and
+    multilingual metadata.
   </Card>
   <Card
-    title="Reusable snippets"
-    icon="recycle"
-    href="/essentials/reusable-snippets"
+    title="Travel docs"
+    icon="id-card"
   >
-    Write once and reuse across your docs.
+    Passports, national IDs, and driver's licenses with expiration
+    tracking and validity rules.
   </Card>
 </Columns>
 
-## Make your content agent ready
+## Subscription tiers
 
-Make your docs work for humans and AI agents alike.
+Three tiers govern request volume and rate limits. Free is implicit —
+every account starts there until you upgrade.
 
-<Columns cols={2}>
-  <Card
-    title="Prompt component"
-    icon="robot"
-    href="/agent-ready/prompt"
-  >
-    Embed shareable AI prompts readers can copy or open in Cursor.
-  </Card>
-  <Card
-    title="Visibility"
-    icon="eye"
-    href="/agent-ready/visibility"
-  >
-    Show different content to humans and agents reading your docs.
-  </Card>
-  <Card
-    title="Contextual menu"
-    icon="bolt"
-    href="/agent-ready/contextual"
-  >
-    Give readers one-click access to Claude, ChatGPT, Cursor, and more.
-  </Card>
-  <Card
-    title="AI coding tools"
-    icon="wand-magic-sparkles"
-    href="/ai-tools/claude-code"
-  >
-    Set up Claude Code, Cursor, or Windsurf with Mintlify's skill.
-  </Card>
-</Columns>
+| Tier | For | How to upgrade |
+| --- | --- | --- |
+| **Free** | Prototyping, evaluation | Default for every signup |
+| **Growth** | Side-projects and small apps in production | Stripe checkout from the dashboard |
+| **Business** | High-volume integrations | Stripe checkout from the dashboard |
 
-## Need inspiration?
-
-<Card
-  title="See complete examples"
-  icon="stars"
-  href="https://mintlify.com/customers"
->
-  Browse our showcase of exceptional documentation sites.
-</Card>
+See [Authentication](/authentication) for the per-tier limits.

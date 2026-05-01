@@ -1,0 +1,112 @@
+---
+title: "Authentication"
+description: "How to authenticate against the public API and the developer dashboard."
+icon: "key"
+---
+
+Ceibo exposes two distinct authentication models:
+
+| Surface | Audience | Auth | Header |
+| --- | --- | --- | --- |
+| `api.ceibo.me/v1` | Third-party developers consuming the API | API key | `x-api-key: <key>` |
+| Developer dashboard endpoints | Logged-in account holders managing their own keys | Supabase JWT | `Authorization: Bearer <jwt>` |
+
+The two paths run on separate gateways with different routing — an
+API key is **never** valid against dashboard endpoints, and a JWT is
+**never** valid against the public API.
+
+## API keys
+
+API keys authenticate every public-data request — countries, cities,
+walking tours, entry requirements, and the rest.
+
+### Header format
+
+Send the key as the `x-api-key` header:
+
+```http
+GET /v1/countries?limit=10 HTTP/1.1
+Host: api.ceibo.me
+x-api-key: ck_live_…
+Accept: application/json
+```
+
+<Warning>
+  Sending multiple `x-api-key` headers on the same request is rejected
+  with `400 Bad Request`. This guards against header-smuggling attempts
+  by upstream proxies.
+</Warning>
+
+### Constraints
+
+- Up to **5 active keys** per account. Revoke unused keys to free a slot.
+- The plaintext key is shown **once** at creation and never persisted in
+  recoverable form. Store it in a secrets manager.
+- Names are unique per account — duplicates return `409 Conflict`.
+- Revocation is **soft** (sets `revoked_at`) and idempotent. Revoked
+  keys remain visible in the dashboard for audit but are rejected by
+  the API.
+
+### Rotation
+
+There is no in-place rotation. To rotate:
+
+1. Mint a new key in the dashboard.
+2. Deploy it to your client.
+3. Revoke the old key.
+
+Rolling overlap windows are how you avoid downtime.
+
+## JWT (developer dashboard)
+
+The dashboard endpoints — managing your own keys, viewing usage,
+checking your subscription — use a **Supabase-issued JWT** in the
+standard `Authorization: Bearer` header.
+
+You will not normally call these endpoints directly; the
+[developer dashboard](https://developer.ceibo.me) handles them. They
+exist for tooling and CI scripts that need programmatic access to a
+specific user's account.
+
+```http
+GET /v1/api-keys HTTP/1.1
+Host: app-api.ceibo.me
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6Ikp...
+```
+
+<Note>
+  Dashboard endpoints additionally require a **real user** — anonymous
+  Supabase sessions cannot mint or manage keys. Sign up before
+  attempting key management calls.
+</Note>
+
+## Subscription tiers
+
+Every key carries a tier derived from the account's developer
+subscription. Tiers gate request volume and rate limits.
+
+| Tier | Status |
+| --- | --- |
+| **Free** | Default for every signup. No subscription row. |
+| **Growth** | Paid via Stripe checkout from the dashboard. |
+| **Business** | Paid via Stripe checkout from the dashboard. |
+
+<Info>
+  **MVP note.** Tier-based rate limiting is staged but not yet enforced
+  at the gateway. Keys are minted with the correct tier and the
+  enforcement layer will roll out without API contract changes — your
+  existing integrations will not need to change when limits go live.
+  Watch the [developer dashboard](https://developer.ceibo.me) for the
+  current per-tier quota.
+</Info>
+
+## Errors
+
+Auth failures return a structured error envelope (see
+[API reference / Errors](/api-reference/introduction#errors)):
+
+| Status | Code | Cause |
+| --- | --- | --- |
+| `401` | `UNAUTHORIZED` | Missing, malformed, revoked, or unknown key/JWT |
+| `403` | `FORBIDDEN` | Authenticated but not allowed (e.g. anonymous user attempting key management) |
+| `429` | `RATE_LIMIT_EXCEEDED` | Tier quota or burst limit exceeded |

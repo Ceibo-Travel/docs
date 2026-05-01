@@ -1,55 +1,79 @@
-# Mintlify Starter Kit
+# Ceibo developer docs
 
-Use the starter kit to get your docs deployed and ready to customize.
+The source for [docs.ceibo.me](https://docs.ceibo.me) — public-facing
+documentation for the Ceibo travel platform API.
 
-Click the green **Use this template** button at the top of this repo to copy the Mintlify starter kit. The starter kit contains examples with
+The site covers:
 
-- Guide pages
-- Navigation
-- Customizations
-- API reference pages
-- Use of popular components
+- Quickstart and authentication
+- API reference (driven by `api-reference/openapi.json`)
+- Subscription tiers and rate-limit model
 
-**[Follow the full quickstart guide](https://starter.mintlify.com/quickstart)**
+The backing API runs at `https://api.ceibo.me/v1`. Engineering
+documentation lives in
+[`ceibo-backend/docs/`](https://github.com/ceibo-travel/ceibo-backend/tree/main/docs)
+and is intentionally not published here.
 
-## AI-assisted writing
+## Local preview
 
-Set up your AI coding tool to work with Mintlify:
+Requires Node 19+.
 
 ```bash
-npx skills add https://mintlify.com/docs
-```
-
-This command installs Mintlify's documentation skill for your configured AI tools like Claude Code, Cursor, Windsurf, and others. The skill includes component reference, writing standards, and workflow guidance.
-
-See the [AI tools guides](/ai-tools) for tool-specific setup.
-
-## Development
-
-Install the [Mintlify CLI](https://www.npmjs.com/package/mint) to preview your documentation changes locally. To install, use the following command:
-
-```
 npm i -g mint
-```
-
-Run the following command at the root of your documentation, where your `docs.json` is located:
-
-```
 mint dev
 ```
 
-View your local preview at `http://localhost:3000`.
+The site runs on `http://localhost:3000`. Hot reload is automatic.
+Use `mint dev --port <n>` to override.
 
-## Publishing changes
+Validate links before pushing:
 
-Install our GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app) to propagate changes from your repo to your deployment. Changes are deployed to production automatically after pushing to the default branch.
+```bash
+mint broken-links
+```
+
+## Deployment
+
+Pushing to `main` deploys automatically via the Mintlify GitHub app.
+DNS for `docs.ceibo.me` is configured in Route 53; the certificate
+is issued by Mintlify via ACME.
+
+## Editing the API reference
+
+Endpoint pages are stubs — the body is rendered from
+`api-reference/openapi.json`. To add a new endpoint:
+
+1. Add the path and schemas to `openapi.json`.
+2. Create a new MDX file under `api-reference/endpoint/` whose
+   frontmatter references the operation:
+
+   ```mdx
+   ---
+   title: "List walking tours"
+   openapi: "GET /walking-tours"
+   ---
+   ```
+
+3. Add the file path to the navigation in `docs.json`.
+
+## Repository layout
+
+```
+.
+├── docs.json              # Site config and navigation
+├── index.mdx              # Landing page
+├── quickstart.mdx         # Get an API key + first request
+├── authentication.mdx     # API keys and JWT
+├── api-reference/
+│   ├── introduction.mdx   # Conventions, pagination, errors
+│   ├── openapi.json       # OpenAPI 3.1 spec — source of truth
+│   └── endpoint/          # Per-operation MDX stubs
+├── logo/                  # Logo SVGs
+├── images/                # Screenshots and hero art
+└── snippets/              # Reusable MDX fragments
+```
 
 ## Need help?
 
-### Troubleshooting
-
-- If your dev environment isn't running: Run `mint update` to ensure you have the most recent version of the CLI.
-- If a page loads as a 404: Make sure you are running in a folder with a valid `docs.json`.
-
-### Resources
-- [Mintlify documentation](https://mintlify.com/docs)
+- Email: [support@ceibo.me](mailto:support@ceibo.me)
+- Mintlify docs: https://mintlify.com/docs

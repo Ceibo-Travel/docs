@@ -1,216 +1,432 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "OpenAPI Plant Store",
-    "description": "A sample API that uses a plant store as an example to demonstrate features in the OpenAPI specification",
-    "license": {
-      "name": "MIT"
-    },
-    "version": "1.0.0"
+    "title": "Ceibo API",
+    "description": "Travel platform data API: countries, cities, points of interest, walking tours, and entry requirements.",
+    "version": "1.0.0",
+    "contact": {
+      "name": "Ceibo Support",
+      "email": "support@ceibo.me",
+      "url": "https://developer.ceibo.me"
+    }
   },
   "servers": [
     {
-      "url": "http://sandbox.mintlify.com"
+      "url": "https://api.ceibo.me/v1",
+      "description": "Production"
     }
   ],
   "security": [
     {
-      "bearerAuth": []
+      "apiKey": []
     }
   ],
   "paths": {
-    "/plants": {
+    "/countries": {
       "get": {
-        "description": "Returns all plants from the system that the user has access to",
+        "summary": "List countries",
+        "description": "Returns a paginated list of countries. Supports search by name, filtering by continent, and sorting.",
         "parameters": [
+          {
+            "name": "search",
+            "in": "query",
+            "description": "Free-text match against the country name.",
+            "required": false,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "continent",
+            "in": "query",
+            "description": "Filter to a single continent.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "Africa",
+                "Antarctica",
+                "Asia",
+                "Europe",
+                "North America",
+                "Oceania",
+                "South America"
+              ]
+            }
+          },
+          {
+            "name": "sortBy",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["name", "iso2", "iso3", "continent"]
+            }
+          },
+          {
+            "name": "sortOrder",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string", "enum": ["asc", "desc"] }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer", "minimum": 1, "default": 1 }
+          },
           {
             "name": "limit",
             "in": "query",
-            "description": "The maximum number of results to return",
+            "required": false,
             "schema": {
               "type": "integer",
-              "format": "int32"
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
             }
           }
         ],
         "responses": {
           "200": {
-            "description": "Plant response",
+            "description": "Paginated list of countries.",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Plant"
-                  }
+                  "$ref": "#/components/schemas/PaginatedCountries"
                 }
               }
             }
           },
-          "400": {
-            "description": "Unexpected error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "description": "Creates a new plant in the store",
-        "requestBody": {
-          "description": "Plant to add to the store",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/NewPlant"
-              }
-            }
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "plant response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Plant"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "unexpected error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
           }
         }
       }
     },
-    "/plants/{id}": {
-      "delete": {
-        "description": "Deletes a single plant based on the ID supplied",
+    "/countries/{id}": {
+      "get": {
+        "summary": "Get a country by id",
         "parameters": [
           {
             "name": "id",
             "in": "path",
-            "description": "ID of plant to delete",
             "required": true,
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The country.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Country" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/cities": {
+      "get": {
+        "summary": "List cities",
+        "description": "Paginated list of cities. Filter by country, search by name, or both.",
+        "parameters": [
+          {
+            "name": "countryId",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer" }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "description": "Free-text match against the city name.",
+            "required": false,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer", "minimum": 1, "default": 1 }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
             "schema": {
               "type": "integer",
-              "format": "int64"
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
             }
           }
         ],
         "responses": {
-          "204": {
-            "description": "Plant deleted",
-            "content": {}
+          "200": {
+            "description": "Paginated list of cities.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/PaginatedCities" }
+              }
+            }
           },
-          "400": {
-            "description": "unexpected error",
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "429": { "$ref": "#/components/responses/RateLimited" }
+        }
+      }
+    },
+    "/cities/nearby": {
+      "get": {
+        "summary": "Find cities near a coordinate",
+        "description": "PostGIS-backed proximity search. Returns cities within `radiusKm` of (`latitude`, `longitude`), ordered by distance.",
+        "parameters": [
+          {
+            "name": "latitude",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "number", "format": "double" }
+          },
+          {
+            "name": "longitude",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "number", "format": "double" }
+          },
+          {
+            "name": "radiusKm",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "minimum": 0.1,
+              "maximum": 500,
+              "default": 50
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cities within range, ordered by distance.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Error"
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/City" }
                 }
               }
             }
-          }
-        }
-      }
-    }
-  },
-  "webhooks": {
-    "/plant/webhook": {
-      "post": {
-        "description": "Information about a new plant added to the store",
-        "requestBody": {
-          "description": "Plant added to the store",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/NewPlant"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Return a 200 status to indicate that the data was received successfully"
-          }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
         }
       }
     }
   },
   "components": {
+    "securitySchemes": {
+      "apiKey": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "x-api-key",
+        "description": "API key minted at developer.ceibo.me. Send on every request."
+      }
+    },
     "schemas": {
-      "Plant": {
-        "required": [
-          "name"
-        ],
+      "Country": {
         "type": "object",
+        "required": ["id", "name", "iso2"],
         "properties": {
-          "name": {
-            "description": "The name of the plant",
-            "type": "string"
+          "id": { "type": "integer", "example": 10 },
+          "name": { "type": "string", "example": "Argentina" },
+          "iso2": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 2,
+            "example": "AR"
           },
-          "tag": {
-            "description": "Tag to specify the type",
-            "type": "string"
+          "iso3": {
+            "type": ["string", "null"],
+            "minLength": 3,
+            "maxLength": 3,
+            "example": "ARG"
+          },
+          "localName": {
+            "type": ["string", "null"],
+            "example": "República Argentina"
+          },
+          "continent": {
+            "type": ["string", "null"],
+            "enum": [
+              "Africa",
+              "Antarctica",
+              "Asia",
+              "Europe",
+              "North America",
+              "Oceania",
+              "South America",
+              null
+            ],
+            "example": "South America"
+          },
+          "officialVisaPage": {
+            "type": ["string", "null"],
+            "example": "https://www.argentina.gob.ar/interior/migraciones"
+          },
+          "primaryLanguageId": { "type": ["integer", "null"], "example": 1 },
+          "holidaysWebsiteUrl": {
+            "type": ["string", "null"],
+            "example": "https://www.argentina.gob.ar/feriados"
+          },
+          "officialWebsiteUrl": {
+            "type": ["string", "null"],
+            "example": "https://www.argentina.gob.ar"
           }
         }
       },
-      "NewPlant": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/Plant"
+      "Location": {
+        "type": "object",
+        "required": ["latitude", "longitude"],
+        "properties": {
+          "latitude": { "type": "number", "example": -34.603722 },
+          "longitude": { "type": "number", "example": -58.381592 }
+        }
+      },
+      "City": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "countryId",
+          "location",
+          "zoom",
+          "isCapital",
+          "createdAt"
+        ],
+        "properties": {
+          "id": { "type": "integer", "example": 1 },
+          "name": { "type": "string", "example": "Buenos Aires" },
+          "countryId": { "type": "integer", "example": 10 },
+          "location": { "$ref": "#/components/schemas/Location" },
+          "zoom": { "type": "integer", "example": 12 },
+          "description": {
+            "type": ["string", "null"],
+            "example": "Capital and largest city of Argentina"
           },
-          {
-            "required": [
-              "id"
-            ],
-            "type": "object",
-            "properties": {
-              "id": {
-                "description": "Identification number of the plant",
-                "type": "integer",
-                "format": "int64"
-              }
-            }
+          "imageUrl": {
+            "type": ["string", "null"],
+            "example": "https://cdn.ceibo.me/cities/buenos-aires.jpg"
+          },
+          "timezone": {
+            "type": ["string", "null"],
+            "example": "America/Argentina/Buenos_Aires"
+          },
+          "isCapital": { "type": "boolean", "example": true },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-01-15T10:30:00.000Z"
           }
-        ]
+        }
+      },
+      "PaginationMeta": {
+        "type": "object",
+        "required": ["page", "limit", "total", "totalPages"],
+        "properties": {
+          "page": { "type": "integer", "example": 1 },
+          "limit": { "type": "integer", "example": 20 },
+          "total": { "type": "integer", "example": 195 },
+          "totalPages": { "type": "integer", "example": 10 }
+        }
+      },
+      "PaginatedCountries": {
+        "type": "object",
+        "required": ["data", "meta"],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/Country" }
+          },
+          "meta": { "$ref": "#/components/schemas/PaginationMeta" }
+        }
+      },
+      "PaginatedCities": {
+        "type": "object",
+        "required": ["data", "meta"],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/City" }
+          },
+          "meta": { "$ref": "#/components/schemas/PaginationMeta" }
+        }
       },
       "Error": {
-        "required": [
-          "error",
-          "message"
-        ],
         "type": "object",
+        "required": ["statusCode", "code", "message", "timestamp", "path"],
         "properties": {
-          "error": {
-            "type": "integer",
-            "format": "int32"
-          },
+          "statusCode": { "type": "integer", "example": 404 },
+          "code": { "type": "string", "example": "NOT_FOUND" },
           "message": {
-            "type": "string"
-          }
+            "type": "string",
+            "example": "Country with id 9999 not found"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-04-30T10:00:00.000Z"
+          },
+          "path": { "type": "string", "example": "/v1/countries/9999" }
         }
       }
     },
-    "securitySchemes": {
-      "bearerAuth": {
-        "type": "http",
-        "scheme": "bearer"
+    "responses": {
+      "BadRequest": {
+        "description": "Validation failed.",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/Error" }
+          }
+        }
+      },
+      "Unauthorized": {
+        "description": "Missing, malformed, revoked, or unknown API key.",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/Error" }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "Resource does not exist.",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/Error" }
+          }
+        }
+      },
+      "RateLimited": {
+        "description": "Tier quota or burst limit exceeded.",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/Error" }
+          }
+        }
       }
     }
   }

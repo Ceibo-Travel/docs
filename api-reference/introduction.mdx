@@ -1,33 +1,114 @@
 ---
-title: 'Introduction'
-description: 'Example section for showcasing API endpoints'
+title: "API reference"
+description: "Base URL, conventions, pagination, and error contract for the Ceibo API."
 ---
 
-<Note>
-  If you're not looking to build API reference documentation, you can delete
-  this section by removing the api-reference folder.
-</Note>
+The Ceibo public API is a JSON-over-HTTPS REST interface. Every call
+goes through a single gateway in front of `api.ceibo.me`.
 
-## Welcome
+## Base URL
 
-There are two ways to build API documentation: [OpenAPI](https://mintlify.com/docs/api-playground/openapi/setup) and [MDX components](https://mintlify.com/docs/api-playground/mdx/configuration). For the starter kit, we are using the following OpenAPI specification.
+```
+https://api.ceibo.me/v1
+```
 
-<Card
-  title="Plant Store Endpoints"
-  icon="leaf"
-  href="https://github.com/mintlify/starter/blob/main/api-reference/openapi.json"
->
-  View the OpenAPI specification file
-</Card>
+All endpoints in this reference are relative to that base. URI
+versioning is in effect — when a new major version ships it will live
+at `/v2` without breaking the `/v1` contract.
+
+A liveness check is available at:
+
+```bash
+curl https://api.ceibo.me/v1/health
+```
+
+It returns `200 OK` with status, timestamp, and the deployed version
+when the API is healthy.
 
 ## Authentication
 
-All API endpoints are authenticated using Bearer tokens and picked up from the specification file.
+Pass your API key in the `x-api-key` header on every request. See
+[Authentication](/authentication) for the full key lifecycle and the
+JWT-based developer dashboard surface.
+
+```http
+x-api-key: ck_live_…
+```
+
+## Pagination
+
+Every list endpoint returns a paginated envelope. The shape is
+consistent regardless of resource:
 
 ```json
-"security": [
-  {
-    "bearerAuth": []
+{
+  "data": [
+    { "id": 1, "name": "..." }
+  ],
+  "meta": {
+    "page": 1,
+    "limit": 20,
+    "total": 195,
+    "totalPages": 10
   }
-]
+}
 ```
+
+| Query param | Default | Max | Notes |
+| --- | --- | --- | --- |
+| `page` | `1` | — | 1-based |
+| `limit` | `20` | `100` | Items per page |
+
+Some resources accept additional filters (`name`, `iso2`, `continent`,
+etc.) — check the endpoint reference for what each accepts.
+
+## Timestamps
+
+All timestamps are **ISO 8601 in UTC**:
+
+```
+2026-04-30T10:00:00.000Z
+```
+
+Both request and response bodies use this format. Date-only fields
+(e.g. `expires_on` on a passport) use `YYYY-MM-DD`.
+
+## Errors
+
+The API returns a structured error envelope on any non-2xx response:
+
+```json
+{
+  "statusCode": 404,
+  "code": "NOT_FOUND",
+  "message": "Country with id 9999 not found",
+  "timestamp": "2026-04-30T10:00:00.000Z",
+  "path": "/v1/countries/9999"
+}
+```
+
+| Status | Code | When |
+| --- | --- | --- |
+| `400` | `VALIDATION_ERROR` | Body or query failed schema validation |
+| `401` | `UNAUTHORIZED` | Missing, revoked, or unknown API key |
+| `403` | `FORBIDDEN` | Key is valid but not allowed for this resource |
+| `404` | `NOT_FOUND` | Resource does not exist |
+| `409` | `CONFLICT` | Uniqueness conflict (e.g. duplicate name) |
+| `422` | `BUSINESS_RULE_VIOLATION` | Domain rule rejected the request |
+| `429` | `RATE_LIMIT_EXCEEDED` | Tier quota or burst limit hit |
+| `500` | `INTERNAL_ERROR` | Unexpected server-side failure |
+
+## CORS
+
+The public API is consumable from browsers in production. Origins are
+allow-listed at the gateway — if you need a domain added, open an
+issue or contact support.
+
+## Conventions
+
+- **Resource paths are plural** (`/countries`, `/cities`).
+- **IDs are integers**, returned as numbers in JSON.
+- **Field names are camelCase** in responses; query parameters are
+  also camelCase.
+- **`null` is meaningful.** A field returning `null` indicates the
+  absence of data; the field is omitted only when explicitly noted.
