@@ -14,20 +14,25 @@
 
 ## Terminology
 
-{/* Add product-specific terms and preferred usage */}
-{/* Example: Use "workspace" not "project", "member" not "user" */}
+- Use **API key**, not "token" or "secret", for the public-API credential.
+- The public-API auth header is `x-api-key` (lowercase). The developer dashboard uses a
+  Supabase **JWT** in `Authorization: Bearer`.
+- Say **developer dashboard** for `developer.ceibo.me`.
+- Product nouns: **walking tours**, **entry requirements**, **cities & POIs**, **travel docs**.
+- Subscription tiers are **Free**, **Growth**, and **Business** (capitalized, in that order).
 
 ## Style preferences
-
-{/* Add any project-specific style rules below */}
 
 - Use active voice and second person ("you")
 - Keep sentences concise — one idea per sentence
 - Use sentence case for headings
 - Bold for UI elements: Click **Settings**
 - Code formatting for file names, commands, paths, and code references
+- The public API base URL is `https://api.ceibo.me/v1`; code samples authenticate with `x-api-key`
 
 ## Content boundaries
 
-{/* Define what should and shouldn't be documented */}
-{/* Example: Don't document internal admin features */}
+- The OpenAPI spec (`api-reference/openapi.json`) is the source of truth for endpoints. Don't
+  hand-author endpoint parameters or response fields — the reference pages render from the spec.
+- Don't document internal gateway routing or rate-limit enforcement internals beyond the existing
+  MVP notes in `authentication.mdx`.
