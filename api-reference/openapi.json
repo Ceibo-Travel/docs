@@ -200,13 +200,20 @@
           {
             "name": "radiusKm",
             "in": "query",
-            "required": false,
+            "description": "Search radius in kilometers.",
+            "required": true,
             "schema": {
               "type": "number",
               "minimum": 0.1,
-              "maximum": 500,
-              "default": 50
+              "maximum": 1000,
+              "example": 50
             }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer", "minimum": 1, "default": 1 }
           },
           {
             "name": "limit",
@@ -222,13 +229,10 @@
         ],
         "responses": {
           "200": {
-            "description": "Cities within range, ordered by distance.",
+            "description": "Paginated cities within range, ordered by distance.",
             "content": {
               "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": { "$ref": "#/components/schemas/City" }
-                }
+                "schema": { "$ref": "#/components/schemas/PaginatedCities" }
               }
             }
           },
@@ -673,6 +677,11 @@
           "officialWebsiteUrl": {
             "type": ["string", "null"],
             "example": "https://www.argentina.gob.ar"
+          },
+          "primaryImageUrl": {
+            "type": ["string", "null"],
+            "description": "First photo of the country's gallery, for cards and thumbnails. `null` when the country has no gallery photos. Returned by `GET /countries` only.",
+            "example": "https://media.ceibo.me/images/country/10/gallery/abc.jpg"
           }
         }
       },
@@ -707,7 +716,13 @@
           },
           "imageUrl": {
             "type": ["string", "null"],
+            "description": "Legacy single image. Prefer `primaryImageUrl` for cards and thumbnails.",
             "example": "https://cdn.ceibo.me/cities/buenos-aires.jpg"
+          },
+          "primaryImageUrl": {
+            "type": ["string", "null"],
+            "description": "First photo of the city's gallery, for cards and thumbnails. `null` when the city has no gallery photos.",
+            "example": "https://media.ceibo.me/images/city/1/gallery/abc.jpg"
           },
           "timezone": {
             "type": ["string", "null"],
